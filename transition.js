@@ -134,10 +134,11 @@
     }, 80);
   }
 
-  // Fresh load: just clear the white screen
+  // Fresh load or bfcache restore: just clear the white screen
   function playFresh() {
     setProgress(0);
     overlay.style.opacity = '1';
+    overlay.style.pointerEvents = 'all';
     setTimeout(function () {
       tween(300, function (t) {
         overlay.style.opacity = 1 - t;
@@ -177,5 +178,17 @@
   } else {
     playFresh();
   }
+
+  // ── Handle bfcache restore (back/forward button) ───────────────────────
+  // When the browser restores a page from cache, JS doesn't re-run and the
+  // overlay is frozen at opacity 1 (the state it was in when we navigated
+  // away). pageshow with persisted:true catches this and clears it.
+  window.addEventListener('pageshow', function (e) {
+    if (e.persisted) {
+      busy = false;
+      sessionStorage.removeItem(FLAG);
+      playFresh();
+    }
+  });
 
 }());
