@@ -90,15 +90,18 @@
   }
 
   // ── Tween: runs fn(eased 0→1) over ms, calls done when finished ───────
+  // t0 is set on the first rAF frame so the clock starts from a real paint
+  // tick — avoids bfcache restore collapsing the animation to a single frame.
   function tween(ms, fn, done) {
     var t0 = null;
-    (function step(ts) {
+    function step(ts) {
       if (!t0) t0 = ts;
       var raw = Math.min((ts - t0) / ms, 1);
       fn(ease(raw));
       if (raw < 1) requestAnimationFrame(step);
       else if (done) done();
-    }(performance.now()));
+    }
+    requestAnimationFrame(step);
   }
 
   // ── Animation phases ───────────────────────────────────────────────────
@@ -187,7 +190,13 @@
     if (e.persisted) {
       busy = false;
       sessionStorage.removeItem(FLAG);
-      playExit();
+      // Wait two rAF ticks so the browser has fully painted the restored page
+      // before we start the exit tween, preventing an instant-complete flash.
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          playExit();
+        });
+      });
     }
   });
 
