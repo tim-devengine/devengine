@@ -187,7 +187,7 @@
     if (e.persisted) {
       busy = false;
       sessionStorage.removeItem(FLAG);
-      playFresh();
+      playExit();
     }
   });
 
